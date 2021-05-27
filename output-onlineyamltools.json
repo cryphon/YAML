@@ -1,0 +1,1430 @@
+﻿{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TapConnect Issuing API",
+    "description": "\n## Introduction\nWelcome to the TapConnect Issuing API documentation. These pages describe the endpoints available within TapConnect.\n\nProduct related endpoints return information about products that are available to you as a sales partner and the details of each of these products.\n\nTicket related endpoints allow you to manage tickets throughout their lifecycle. Such as creation, retrieveing ticket information, or retrieving the barcode for a ticket.\n\nAn api key is required to access this api. Please contact tapconnect@ximedes.com or your Public Transport Operator to get yours!\n## TapConnect Validation API\nIf you are looking for the TapConnect Validation API description please visit:\n\n[https://app.swaggerhub.com/apis-docs/Ximedes/tap_connect_validation_api](https://app.swaggerhub.com/apis-docs/Ximedes/tap_connect_validation_api)\n## Transport Operator MaaS Provider (TOMP) API\nIf you are looking for the TOMP API please visit:\n\n[https://app.swaggerhub.com/apis-docs/Ximedes/TapCheck-TOMP-API](https://app.swaggerhub.com/apis-docs/Ximedes/TapCheck-TOMP-API)",
+    "version": "1.1.1"
+  },
+  "servers": [
+    {
+      "url": "https://issuing.tapcheck.io",
+      "description": "TapConnect Issuing API endpoint"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Export",
+      "x-displayName": "Export data",
+      "description": "Export data that can be used to generate reports about issued tickets and related information"
+    },
+    {
+      "name": "Product",
+      "x-displayName": "Product endpoints",
+      "description": "Product related endpoints can be used to retrieve information about the products that are currently available for purchase."
+    },
+    {
+      "name": "Ticket",
+      "x-displayName": "Ticket endpoints",
+      "description": "Ticket related endpoints are used to handle ticket related actions. Tickets can be bought, activated, information can be retrieved about sold tickets, barcodes can be requested for a sold ticket, and a ticket can be blocked or cancelled. Based on your authorization level you have access to some (or all) of these endpoints."
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Webshop API",
+      "tags": [
+        "Product",
+        "Ticket",
+        "Export"
+      ]
+    }
+  ],
+  "components": {
+    "schemas": {
+      "SalesChannelId": {
+        "type": "string",
+        "pattern": "^[1-9][0-9]{0,9}$",
+        "example": 197492442,
+        "description": "A unique identifier for this Sales Channel (also known as sales partner)."
+      },
+      "ProductCode": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9]{1,4}$",
+        "example": "A2B4",
+        "description": "A unique identifier for this product type."
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "NL",
+          "EN"
+        ],
+        "description": "Language, default language is `EN` unless `NL` is specified."
+      },
+      "Modality": {
+        "type": "string",
+        "enum": [
+          "BUS",
+          "TRAM",
+          "METRO",
+          "NIGHTLINE",
+          "TRAIN"
+        ],
+        "example": "BUS",
+        "description": "A mode of transportation."
+      },
+      "ProductType": {
+        "type": "string",
+        "enum": [
+          "STOP_TO_STOP",
+          "TIME_BASED"
+        ],
+        "example": "TIME_BASED",
+        "description": "The type of the product."
+      },
+      "ServiceId": {
+        "type": "string",
+        "example": "ABC-1234-7654-8945",
+        "description": "A printable id that needs to be next to the printed barcode on the ticket, which is used when the\ncustomer contacts the service desk.\n"
+      },
+      "TicketId": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9]{20}$",
+        "example": "KJj43nejhbTxhr897287",
+        "description": "A unique 20-character alphanumeric id for a ticket."
+      },
+      "Barcode": {
+        "type": "string",
+        "format": "byte",
+        "description": "Bytes contained in a barcode, encoded as base64.\n"
+      },
+      "BarcodeBytes": {
+        "type": "string",
+        "format": "bytes",
+        "description": "Bytes representing a UIC Ticket that conforms to the Translink\n2D barcode layout standard, which is an interpretation of the\nUIC 918-3 specification.\n"
+      },
+      "TicketEventType": {
+        "type": "string",
+        "enum": [
+          "CREATE_TICKET",
+          "ACTIVATE_TICKET",
+          "CREATE_BARCODE",
+          "TAP",
+          "NOTIFY",
+          "CANCEL_TICKET",
+          "FRAUD_DETECTED",
+          "BLOCKED_TICKET",
+          "BIND_BARCODE",
+          "INSPECT_TICKET"
+        ]
+      },
+      "DisplayableEventResult": {
+        "type": "string",
+        "enum": [
+          "VALIDITY_STARTED",
+          "VALIDITY_ENDED",
+          "LIFESPAN_ENDED",
+          "OK",
+          "BLOCKED_TICKET",
+          "CANCEL_TICKET",
+          "FRAUD_DETECTED",
+          "IN",
+          "OUT",
+          "UNKNOWN_DIRECTION",
+          "BARCODE_NOT_YET_VALID",
+          "INVALID_BARCODE",
+          "ON_DENY_LIST",
+          "BARCODE_NO_LONGER_VALID",
+          "UNKNOWN",
+          "BIND_BARCODE",
+          "PASSBACK_DETECTED",
+          "INSPECT_TICKET"
+        ]
+      },
+      "ValidityStart": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2020-03-03T00:00:00",
+        "description": "The date at which the ticket will become valid for traveling. The\nticket will not be valid before this date/time. Date/times are always\nin the \"Europe/Amsterdam\" timezone.\n"
+      },
+      "ValidityEnd": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2020-03-04T23:59:59",
+        "description": "The last date at which the ticket will be valid for traveling. The\nticket will not be valid after this date/time. Date/times are always\nin the \"Europe/Amsterdam\" timezone.\n"
+      },
+      "ValidityStartReduced": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2020-03-03T00:00:00",
+        "description": "The date-time at which the ticket will become valid for traveling. The\nticket will not be valid before this date. For tickets that require activation:\nbefore activation this field will show the range in which a ticket can be activated,\nafter activation the value of this field is updated to the final validity range.\nDate/times are always in the \"Europe/Amsterdam\" timezone.\n\nFor example: a 1 hour product that has to be activated within 7 days. Before ticket activation (`activatedAt` field returns `null`) the value will return the 7 day range, after activation (`activatedAt` field returns a date-time) the\nvalue will show the final 1 hour validity range.\n"
+      },
+      "ValidityEndReduced": {
+        "type": "string",
+        "format": "date-time",
+        "example": "2020-03-04T23:59:59",
+        "description": "The last date-time at which the ticket will be valid for traveling. The\nticket will not be valid after this date. For tickets that require activation:\nbefore activation this field will show the range in which a ticket can be activated,\nafter activation the value of this field is updated to the final validity range.\nDate/times are always in the \"Europe/Amsterdam\" timezone.\n\nFor example: a 1 hour product that has to be activated within 7 days. Before ticket activation (`activatedAt` field returns `null`) the value will return the 7 day range, after activation (`activatedAt` field returns a date-time) the\nvalue will show the final 1 hour validity range.\n"
+      },
+      "ProductSummary": {
+        "required": [
+          "id",
+          "productNameNL",
+          "productNameEN"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ProductCode"
+          },
+          "productNameNL": {
+            "type": "string",
+            "example": "24 uurs dagkaart",
+            "description": "The name of the product, in Dutch"
+          },
+          "productNameEN": {
+            "type": "string",
+            "example": "24 hour dayticket",
+            "description": "The name of the product, in English"
+          },
+          "priceInCents": {
+            "type": "integer",
+            "example": 750,
+            "description": "The price in eurocents for the product."
+          }
+        }
+      },
+      "ProductDetails": {
+        "required": [
+          "salesChannelId",
+          "productNameNL",
+          "productNameEN",
+          "productDescriptionNL",
+          "productDescriptionEN",
+          "productCode",
+          "validityDuration",
+          "validityUnit",
+          "modalities",
+          "termsAndConditionsNL",
+          "termsAndConditionsEN",
+          "productType"
+        ],
+        "properties": {
+          "salesChannelId": {
+            "$ref": "#/components/schemas/SalesChannelId"
+          },
+          "productNameNL": {
+            "type": "string",
+            "example": "24 uurs dagkaart",
+            "description": "The name of the product, in Dutch"
+          },
+          "productNameEN": {
+            "type": "string",
+            "example": "24 hour dayticket",
+            "description": "The name of the product, in English"
+          },
+          "productDescriptionNL": {
+            "type": "string",
+            "example": "Een kaart om 24 uur in Amsterdam mee te reizen",
+            "description": "The description of the product, in Dutch"
+          },
+          "productDescriptionEN": {
+            "type": "string",
+            "example": "A ticket for traveling in Amsterdam for 24 hours",
+            "description": "The description of the product, in English"
+          },
+          "productCode": {
+            "$ref": "#/components/schemas/ProductCode"
+          },
+          "selectableUsageRangeStart": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-01",
+            "description": "For products that are valid on fixed date(s), this field marks the start\nof the range of dates the user can select.\n"
+          },
+          "selectableUsageRangeEnd": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-28",
+            "description": "For products that are valid on fixed date(s), this field marks the end (inclusive)\nof the range of dates the user can select.\n"
+          },
+          "usableAfter": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-02",
+            "description": "For products that become valid on first use, this field tells the user that\nthe product can be used (activated) after this date (exclusive).\n"
+          },
+          "usableBefore": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-20",
+            "description": "For products that become valid on first use, this field tells the user that\nthe product can be used (activated before this date (exclusive).\n"
+          },
+          "validityDuration": {
+            "type": "integer",
+            "example": 1440,
+            "description": "The duration of the validity of the ticket. The duration starts at 00:00 on\nthe selected date for fixed validity tickets, or at the moment of first use\nfor sliding validity tickets.\n"
+          },
+          "validityUnit": {
+            "type": "string",
+            "example": "minutes",
+            "description": "The unit in which `validityDuration` is expressed."
+          },
+          "priceInCents": {
+            "type": "integer",
+            "example": 750,
+            "description": "The price in eurocents for the product."
+          },
+          "modalities": {
+            "$ref": "#/components/schemas/Modality",
+            "type": "array",
+            "example": "[Bus, Train]",
+            "description": "The allowed modes of transportation for this product."
+          },
+          "termsAndConditionsNL": {
+            "type": "string",
+            "example": "https://publictransportoperator.nl/termsandconditions/nl/",
+            "description": "A link to the Dutch terms and conditions for this product."
+          },
+          "termsAndConditionsEN": {
+            "type": "string",
+            "example": "https://publictransportoperator.nl/termsandconditions/en/",
+            "description": "A link to the English terms and conditions for this product."
+          },
+          "productType": {
+            "$ref": "#/components/schemas/ProductType",
+            "type": "string",
+            "example": "TIME_BASED",
+            "description": "The type of this product."
+          }
+        }
+      },
+      "CreateTicketRequest": {
+        "properties": {
+          "salesChannelId": {
+            "$ref": "#/components/schemas/SalesChannelId",
+            "required": true
+          },
+          "ticketLanguage": {
+            "$ref": "#/components/schemas/Language",
+            "required": true
+          },
+          "productCode": {
+            "$ref": "#/components/schemas/ProductCode",
+            "required": true
+          },
+          "validityStart": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-03",
+            "description": "Required for products that require the customer to pick a starting date for their ticket.\nIt is the date on which the validity of that ticket will start, as chosen by the customer.\nFor products that are activated on first use, this field can be omitted.\nMandatory for tickets with Stop to Stop products\n"
+          },
+          "startStation": {
+            "type": "string",
+            "example": "amsterdam-cs",
+            "description": "In case of a stop-to-stop product, this field contains the identifier of the first station\nin the trip where the ticket should be used.\n"
+          },
+          "endStation": {
+            "type": "string",
+            "example": "amsterdam/metrostation-zuid",
+            "description": "In case of a stop-to-stop product, this field contains the identifier of the last station\nin the trip where the ticket should be used.\n"
+          },
+          "childTicket": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indication when the issued ticket is a child ticket\n"
+          }
+        },
+        "required": [
+          "salesChannelId",
+          "ticketLanguage",
+          "productCode"
+        ]
+      },
+      "TicketResponse": {
+        "required": [
+          "serviceId",
+          "ticketId",
+          "productName",
+          "issuedAt",
+          "lifespanStart",
+          "lifespanEnd",
+          "active",
+          "cancelled"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "productName": {
+            "type": "string",
+            "example": "24 uurs dagkaart",
+            "description": "The name of the product in the selected language at purchase"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-01T00:00:00",
+            "description": "The date at which this ticket was issued, timezone is always Europe/Amsterdam"
+          },
+          "lifespanStart": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-01",
+            "description": "The date at which the lifespan of the ticket starts. Tickets are not\nvalid and cannot be activated before this date.\n"
+          },
+          "lifespanEnd": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-28",
+            "description": "The date at which the lifespan of the ticket ends. Tickets are not\nvalid and cannot be activated after this date.\n"
+          },
+          "validityStart": {
+            "$ref": "#/components/schemas/ValidityStart"
+          },
+          "validityEnd": {
+            "$ref": "#/components/schemas/ValidityEnd"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true,
+            "description": "For sliding validity products, this field will indicate if the\nTicket is `active`, i.e. if the user has started using it.\nFixed validity products will always be active.\n"
+          },
+          "startStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The id of the station where the travel on the ticket is valid from.\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "endStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The id of the station where the travel on the ticket is valid from.\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "childTicket": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indication when the issued ticket is a child ticket\n"
+          }
+        }
+      },
+      "FullTicket": {
+        "required": [
+          "ticketId",
+          "serviceId",
+          "productName",
+          "productCode",
+          "modalities",
+          "priceInCents",
+          "lifespanStart",
+          "lifespanEnd",
+          "issuedAt",
+          "language",
+          "salesChannelId",
+          "salesChannelName",
+          "blocked",
+          "fraudDetected"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "productName": {
+            "type": "string",
+            "example": "24 uurs dagkaart",
+            "description": "The name of the product in the selected language at purchase"
+          },
+          "productCode": {
+            "$ref": "#/components/schemas/ProductCode"
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Modality"
+            },
+            "description": "The allowed mode(s) of transportation for this product."
+          },
+          "priceInCents": {
+            "type": "integer",
+            "example": 750,
+            "description": "The price paid, in eurocents, for the product."
+          },
+          "lifespanStart": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-01",
+            "description": "The date at which the lifespan of the ticket starts. Tickets are not\nvalid and cannot be activated before this date.\n"
+          },
+          "lifespanEnd": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-28",
+            "description": "The date at which the lifespan of the ticket ends. Tickets are not\nvalid and cannot be activated after this date.\n"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-21",
+            "description": "The date at which this ticket was issued"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "salesChannelId": {
+            "$ref": "#/components/schemas/SalesChannelId"
+          },
+          "salesChannelName": {
+            "type": "string",
+            "example": "Coffee & Tickets to go.",
+            "description": "The name of the sales channel (also known as sales partner) through which this ticket was sold."
+          },
+          "validityStart": {
+            "$ref": "#/components/schemas/ValidityStart"
+          },
+          "validityEnd": {
+            "$ref": "#/components/schemas/ValidityEnd"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-03T00:00:00",
+            "description": "The date/time at which this ticket was activated. In case of\nsliding validity products, this field will be filled on activation.\nDate/times are always in the \"Europe/Amsterdam\" timezone.\n"
+          },
+          "blocked": {
+            "type": "boolean",
+            "example": false,
+            "description": "Indicates if this ticket is blocked from being used for travel.\n"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": null,
+            "description": "If this ticket is cancelled, this field contains the cancellation\ndate/time. If the ticket is not cancelled, this field is null.\n"
+          },
+          "fraudDetected": {
+            "type": "boolean",
+            "example": false,
+            "description": "If fraudulent activity was detected with this ticket, this field will\nreturn true. Tickets on the deny list can no longer be used.\n"
+          },
+          "fraudDetectedAutomatically": {
+            "type": "boolean",
+            "example": false,
+            "description": "If this ticket was put on the deny list because of fraudulent activity,\nthis flag indicates if that was done by an automatic process. If the\nticket is not on the deny list because of fraud, this field will be\nfalse.\n"
+          },
+          "startStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The id of the station where the travel on the ticket is valid from.\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "endStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The id of the station where the travel on the ticket is valid from.\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "childTicket": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indication when the issued ticket is a child ticket\n"
+          }
+        }
+      },
+      "ReducedTicket": {
+        "required": [
+          "ticketId",
+          "serviceId",
+          "productName",
+          "priceInCents",
+          "issuedAt",
+          "language",
+          "salesChannelId",
+          "salesChannelName",
+          "blocked",
+          "modalities"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "productName": {
+            "type": "string",
+            "example": "24 uurs dagkaart",
+            "description": "The name of the product in the selected language at purchase"
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Modality"
+            },
+            "description": "The allowed mode(s) of transportation for this product."
+          },
+          "priceInCents": {
+            "type": "integer",
+            "example": 750,
+            "description": "The price paid, in eurocents, for the product."
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date",
+            "example": "2020-03-21",
+            "description": "The date at which this ticket was issued"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "salesChannelId": {
+            "$ref": "#/components/schemas/SalesChannelId"
+          },
+          "salesChannelName": {
+            "type": "string",
+            "example": "Coffee & Tickets to go.",
+            "description": "The name of the sales channel (also known as sales partner) through which this ticket was sold."
+          },
+          "validityStart": {
+            "$ref": "#/components/schemas/ValidityStartReduced"
+          },
+          "validityEnd": {
+            "$ref": "#/components/schemas/ValidityEndReduced"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-03T00:00:00",
+            "description": "The date/time at which this ticket was activated. In case of\nsliding validity products, this field will be filled on activation.\nDate/times are always in the \"Europe/Amsterdam\" timezone.\n"
+          },
+          "blocked": {
+            "type": "boolean",
+            "example": false,
+            "description": "Indicates if this ticket is blocked from being used for travel.\n"
+          },
+          "startStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The origin station for a ticket with a delimited journey\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "endStation": {
+            "type": "string",
+            "example": "1336",
+            "description": "The destination station for a ticket with a delimited journey\nOnly present on tickets created for Stop to Stop products\n"
+          },
+          "childTicket": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indication when the issued ticket is a child ticket\n"
+          }
+        }
+      },
+      "DisplayableEvent": {
+        "required": [
+          "occurredAt",
+          "result"
+        ],
+        "properties": {
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-03T00:00:00",
+            "description": "Time at which this event occurred. Date/times are always in the \"Europe/Amsterdam\" timezone."
+          },
+          "location": {
+            "type": "string",
+            "description": "Location of the event. This can be a train station name, or GPS location."
+          },
+          "action": {
+            "$ref": "#/components/schemas/TicketEventType"
+          },
+          "result": {
+            "$ref": "#/components/schemas/DisplayableEventResult"
+          }
+        }
+      },
+      "ReducedTicketInfo": {
+        "required": [
+          "ticket",
+          "events"
+        ],
+        "properties": {
+          "ticket": {
+            "$ref": "#/components/schemas/ReducedTicket"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisplayableEvent"
+            }
+          }
+        }
+      },
+      "FullTicketInfo": {
+        "required": [
+          "ticket",
+          "events"
+        ],
+        "properties": {
+          "ticket": {
+            "$ref": "#/components/schemas/FullTicket"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisplayableEvent"
+            }
+          }
+        }
+      },
+      "CancelTicketResponse": {
+        "required": [
+          "serviceId",
+          "ticketId",
+          "blocked"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "blocked": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indicates if this ticket is blocked from being used for travel.\n"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-03T13:43:12",
+            "description": "If this ticket is cancelled, this field contains the cancellation\ndate/time. If the ticket is not cancelled, this field is null.\nDate/times are always in the \"Europe/Amsterdam\" timezone.\n"
+          }
+        }
+      },
+      "FraudDetectedResponse": {
+        "required": [
+          "serviceId",
+          "ticketId",
+          "blocked",
+          "fraudDetected"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "blocked": {
+            "type": "boolean",
+            "example": true,
+            "description": "Indicates if this ticket is blocked from being used for travel.\n"
+          },
+          "fraudDetected": {
+            "type": "boolean",
+            "example": true,
+            "description": "If fraudulent activity was detected with this ticket, this field will\nreturn true. Tickets on the deny list can no longer be used.\n"
+          }
+        }
+      },
+      "ActivateTicketResponse": {
+        "required": [
+          "serviceId",
+          "ticketId",
+          "active"
+        ],
+        "properties": {
+          "serviceId": {
+            "$ref": "#/components/schemas/ServiceId"
+          },
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "validityStart": {
+            "$ref": "#/components/schemas/ValidityStart"
+          },
+          "validityEnd": {
+            "$ref": "#/components/schemas/ValidityEnd"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true,
+            "description": "For sliding validity products, this field will indicate if the\nTicket is `active`, i.e. if the user has started using it.\nFixed validity products will always be active.\n"
+          }
+        }
+      },
+      "BindTicketResponse": {
+        "type": "string",
+        "format": "text",
+        "example": "Bind registered for ticket KJj43nejhbTxhr897287.",
+        "description": "Message that the barcode was successfully bound to the provided ticketId."
+      },
+      "IssuedTicket": {
+        "required": [
+          "ticketId",
+          "productCode",
+          "action",
+          "reportedAt",
+          "salesChannelId"
+        ],
+        "properties": {
+          "ticketId": {
+            "$ref": "#/components/schemas/TicketId"
+          },
+          "productCode": {
+            "$ref": "#/components/schemas/ProductCode"
+          },
+          "priceInCents": {
+            "type": "integer",
+            "example": 750,
+            "description": "The price, in eurocents, for the issued ticket"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ActionType"
+          },
+          "reportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-03-03T00:00:00",
+            "description": "The date of reporting of the returned event\n"
+          },
+          "salesChannelId": {
+            "$ref": "#/components/schemas/SalesChannelId"
+          }
+        }
+      },
+      "ActionType": {
+        "type": "string",
+        "enum": [
+          "ISSUED",
+          "CANCELLED"
+        ],
+        "description": "Type of action that describes an event that occured with the ticket"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "description": "Authentication and authorization is based on a pre-shared API key. The API key is to be included in every API call in the Authorization header using the Bearer method.\n#### Example:\n``` curl --location --request POST 'https://issuing.tapcheck.io/v1/tickets/create' --header 'Authorization: Bearer z6QkOERZsWbQC4QcwIdexgEWZHJP4VNF8CfQogaZmXV=' --header 'Content-Type: application/json' --data-raw '{ \"salesChannelId\": \"1\", \"ticketLanguage\": \"NL\", \"productCode\": \"0001\", \"validityStart\":\"2020-12-03\" }' ```\n\n*Note: `z6QkOERZsWbQC4QcwIdexgEWZHJP4VNF8CfQogaZmXV=` is not a real API key, just shown for illustration purposes.*\n\nAccess to specific endpoints is dependent on the agreements made with public transport operator you are connecting to. So not every endpoint might be available to you even though the endpoint is described in this documentation.",
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/channels/{salesChannelId}/products": {
+      "get": {
+        "summary": "List Products",
+        "tags": [
+          "Product"
+        ],
+        "description": "Returns a list of products for the given `salesChannelId`.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "required": true,
+            "name": "salesChannelId",
+            "schema": {
+              "$ref": "#/components/schemas/SalesChannelId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a JSON array of products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductSummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/channels/{salesChannelId}/products/{productCode}": {
+      "get": {
+        "summary": "Product Details",
+        "tags": [
+          "Product"
+        ],
+        "description": "Returns the details of the selected product.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "salesChannelId",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SalesChannelId"
+            }
+          },
+          {
+            "in": "path",
+            "name": "productCode",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProductCode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/issued-tickets-export/{day}": {
+      "get": {
+        "summary": "Get issuing report data",
+        "tags": [
+          "Export"
+        ],
+        "description": "Provides a list of issued tickets data from a specific day that can be used to build ticket related reports\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day",
+            "schema": {
+              "type": "string",
+              "example": "2020-03-23",
+              "description": "A date formatted string that indicates the day of which ticket data is being requested"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return the list of issued tickets for the requested day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IssuedTicket"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/create": {
+      "post": {
+        "summary": "Create ticket",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Creates a ticket for traveling, based on the selected product.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTicketRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns a JSON array of products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request could not be validated. The request body or parameters contain\nincomplete or incorrect parameters. The body of the response will contain\ninformation about the problem.\n"
+          },
+          "401": {
+            "description": "Unauthorized call, you are not authorized to call this endpoint with the api key\nprovided in the Authorization header. Please verify that your api key is correct and/or\nif you are authorized to call this endpoint.\n"
+          },
+          "403": {
+            "description": "Unauthorized call, you are not authorized to call this endpoint with the api key\nprovided in the Authorization header. Please verify that your api key is correct and/or\nif you are authorized to call this endpoint.\n"
+          },
+          "404": {
+            "description": "The requested URL does not exist, or the requested object was not found.\n"
+          },
+          "406": {
+            "description": "The request was not accepted by the server. The body of the response will\ncontain information about the problem.\n"
+          },
+          "500": {
+            "description": "The server encountered an internal error while processing your request.\nThe body of the response will contain more information about the problem,\nand also a unique log entry id. Please keep this log entry id for future\nreference, as we might need it to analyze the problem.\n"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/info": {
+      "get": {
+        "summary": "Get ticket info",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Provides information and events related to a ticket. This endpoint is aimed towards Sales Channel customer support or information shown to a traveller.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return information for the selected TicketId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReducedTicketInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/full-info": {
+      "get": {
+        "summary": "Get full ticket info",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Provides the full information and events related to a ticket. This endpoint is dedicated for PTO customer service channels to provide all available information.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return information for the selected TicketId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullTicketInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/activate": {
+      "post": {
+        "summary": "Activate ticket",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "For tickets with a sliding validity, this endpoint can be used\nto indicate the activation (first use) of the ticket.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivateTicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/barcode": {
+      "get": {
+        "summary": "Get barcode",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "After a ticket has been created and (if required) activated a UIC918-3 compliant aztec barcode can be retrieved using this endpoint.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          },
+          {
+            "in": "header",
+            "name": "accept",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/octet-stream",
+                "image/png"
+              ],
+              "description": "Request the response as raw bytes or as a png image."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "operation successful",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeBytes"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/cancel": {
+      "post": {
+        "summary": "Cancel ticket",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Cancels the ticket with the given id, with the\ngiven cancellation reason.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelTicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/fraud-detected": {
+      "post": {
+        "summary": "Fraud detected",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Marks a ticket as fraudulent. If a ticket is marked as fraud it is added to the deny list until the ticket has expired, the ticket cannot be used for travelling at this point. It is also included in fraud related reporting.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "automatic": {
+                    "type": "boolean",
+                    "description": "Whether the ticket is marked as fraudulent manually (e.g. by customer service using the UI) or automatically\n(e.g. by the fraud detection system). Please only use `false` unless you are an automatic fraud detection system.\n",
+                    "default": false
+                  }
+                },
+                "required": [
+                  "automatic"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FraudDetectedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "403": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/403"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tickets/{ticketId}/bind": {
+      "post": {
+        "summary": "Bind barcode",
+        "tags": [
+          "Ticket"
+        ],
+        "description": "Binds an external barcode to a ticket in order to be able to travel with it instead of a barcode generated by TapConnect\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "schema": {
+              "$ref": "#/components/schemas/TicketId"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "barcodeToBind": {
+                    "type": "string",
+                    "example": "RW5jb2RlZCBNZXNzYWdl",
+                    "description": "Encoded Base 64 (RFC4648) string of the bytes representing a barcode to be bound to a ticket with a max size of 2KB\n"
+                  }
+                },
+                "required": [
+                  "barcodeToBind"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Bind registered for ticket KJj43nejhbTxhr897287.",
+                  "description": "Message that a bind was successfuly registered for the ticketId"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/400"
+          },
+          "401": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/401"
+          },
+          "404": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/404"
+          },
+          "406": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/406"
+          },
+          "500": {
+            "$ref": "#/paths/~1v1~1tickets~1create/post/responses/500"
+          }
+        }
+      }
+    }
+  }
+}
